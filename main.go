@@ -20,6 +20,7 @@ import (
 type Dependencies struct {
 	DB               *sql.DB
 	ServerKey        string
+	CallbackUrl      string
 	DatabaseProvider string
 }
 
@@ -32,6 +33,11 @@ func main() {
 	serverKey, ok := os.LookupEnv("SERVER_KEY")
 	if !ok {
 		serverKey = "SB-Mid-server-abc123cde456"
+	}
+
+	callbackUrl, ok := os.LookupEnv("CALLBACK_URL")
+	if !ok {
+		callbackUrl = "localhost"
 	}
 
 	databaseProvider, ok := os.LookupEnv("DATABASE_PROVIDER")
@@ -55,9 +61,22 @@ func main() {
 		}
 	}()
 
+	var maximumOpenConns int = 20
+	var maximumIdleConns int = 5
+
+	if databaseProvider == "sqlite3" || databaseProvider == "sqlite" {
+		maximumOpenConns = 1
+		maximumIdleConns = 1
+	}
+
+	db.SetConnMaxLifetime(time.Second * 60)
+	db.SetMaxOpenConns(maximumOpenConns)
+	db.SetMaxIdleConns(maximumIdleConns)
+
 	dependencies := &Dependencies{
 		DB:               db,
 		ServerKey:        serverKey,
+		CallbackUrl:      callbackUrl,
 		DatabaseProvider: databaseProvider,
 	}
 
@@ -65,6 +84,8 @@ func main() {
 
 	// Check for Authorization
 	app.Use(dependencies.Authorization)
+	app.Get("/healthz", dependencies.Healthz)
+	app.Get("/charge", dependencies.Charge)
 
 	server := &http.Server{
 		Handler:      app,
