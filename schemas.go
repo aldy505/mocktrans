@@ -50,7 +50,9 @@ func (d *Dependencies) MigrateSchema(ctx context.Context) error {
 		`CREATE TABLE IF NOT EXISTS webhook_history (
 			transaction_id VARCHAR(36) NOT NULL,
 			event_type VARCHAR(50) NOT NULL,
+			status VARCHAR(50) NOT NULL,
 			data TEXT NOT NULL,
+			success BOOLEAN NOT NULL,
 			created_at DATETIME NOT NULL
 		)`,
 		`CREATE INDEX IF NOT EXISTS webhook_history_transaction_id_idx ON webhook_history (transaction_id)`,

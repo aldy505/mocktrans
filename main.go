@@ -83,6 +83,8 @@ func main() {
 	app := chi.NewRouter()
 
 	// Check for Authorization
+	app.Get("/", dependencies.UserConfirmation)
+	app.Put("/confirm", dependencies.Confirm)
 	app.Use(dependencies.Authorization)
 	app.Get("/healthz", dependencies.Healthz)
 	app.Get("/charge", dependencies.Charge)
